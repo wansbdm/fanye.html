@@ -9,39 +9,40 @@
     height: 100%;
     margin: 0;
     font-family: Arial, sans-serif;
-    color: #fff;
+    overflow: hidden; /* 防止内容水平滚动 */
   }
   #slideshow-container {
     position: relative;
     width: 100%;
-    height: 100%;
-    overflow: hidden;
+    height: 300%; /* 根据页数调整高度 */
+    transition: transform 0.5s ease-in-out; /* 平滑过渡效果 */
   }
   .slide {
-    display: none;
     position: absolute;
     width: 100%;
-    height: 100%;
-    background-position: center;
-    background-size: cover;
-  }
-  .pagination {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    height: 33.33%; /* 每页占容器高度的三分之一 */
     display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .pagination button {
-    border: none;
-    background-color: #fff;
-    margin: 0 5px;
-    padding: 5px 10px;
-    cursor: pointer;
-    opacity: 0.6;
+  /* 设置每一页的背景色和图片 */
+  .slide:nth-child(1) {
+    background-color: #FFC0CB; /* 淡粉色 */
+    background-image: url('your-image-url-1.png'); /* 替换为你的图片URL */
+    background-size: cover;
+    background-position: center;
   }
-  .pagination button.active {
-    opacity: 1;
+  .slide:nth-child(2) {
+    background-color: #87CEEB; /* 马卡龙蓝色 */
+    background-image: url('your-image-url-2.png'); /* 替换为你的图片URL */
+    background-size: cover;
+    background-position: center;
+  }
+  .slide:nth-child(3) {
+    background-color: #90EE90; /* 淡淡绿色 */
+    background-image: url('your-image-url-3.png'); /* 替换为你的图片URL */
+    background-size: cover;
+    background-position: center;
   }
 </style>
 </head>
@@ -51,77 +52,75 @@
   <!-- Slides will be added here by JavaScript -->
 </div>
 
-<div class="pagination">
-  <!-- Pagination buttons will be added here by JavaScript -->
-</div>
-
 <script>
   // 定义每页的背景颜色和图片
   const slides = [
-    {
-      backgroundColor: '#FFC0CB', // 淡粉色
-      imageUrl: 'your-image-url-1.png' // 替换为你的图片URL
-    },
-    {
-      backgroundColor: '#87CEEB', // 马卡龙蓝色
-      imageUrl: 'your-image-url-2.png' // 替换为你的图片URL
-    },
-    {
-      backgroundColor: '#90EE90', // 淡淡绿色
-      imageUrl: 'your-image-url-3.png' // 替换为你的图片URL
-    }
+    { backgroundColor: '#FFC0CB', imageUrl: 'your-image-url-1.png' },
+    { backgroundColor: '#87CEEB', imageUrl: 'your-image-url-2.png' },
+    { backgroundColor: '#90EE90', imageUrl: 'your-image-url-3.png' }
   ];
 
   // 创建单个幻灯片的函数
-  function createSlide({backgroundColor, imageUrl}, index) {
+  function createSlide(slideInfo) {
     const slide = document.createElement('div');
     slide.className = 'slide';
-    slide.style.backgroundColor = backgroundColor;
-    slide.style.backgroundImage = `url(${imageUrl})`;
+    slide.style.backgroundColor = slideInfo.backgroundColor;
+    slide.style.backgroundImage = `url(${slideInfo.imageUrl})`;
     return slide;
   }
 
   // 初始化幻灯片
   function initSlides() {
     const container = document.getElementById('slideshow-container');
-    slides.forEach((slideInfo, index) => {
-      const slide = createSlide(slideInfo, index);
+    slides.forEach(slideInfo => {
+      const slide = createSlide(slideInfo);
       container.appendChild(slide);
     });
-    document.querySelectorAll('.slide')[0].style.display = 'block'; // 显示第一页
   }
 
-  // 创建分页按钮的函数
-  function createPagination() {
-    const pagination = document.querySelector('.pagination');
-    slides.forEach((_, index) => {
-      const button = document.createElement('button');
-      button.textContent = index + 1;
-      button.addEventListener('click', () => {
-        changeSlide(index);
-      });
-      pagination.appendChild(button);
-    });
-  }
+  // 初始化幻灯片
+  initSlides();
 
-  // 改变幻灯片的函数
-  function changeSlide(index) {
-    document.querySelectorAll('.slide').forEach((slide, i) => {
-      slide.style.display = i === index ? 'block' : 'none';
-    });
-    document.querySelectorAll('.pagination button').forEach((button, i) => {
-      button.classList.toggle('active', i === index);
-    });
-  }
+  let startY, isTouching = false;
 
-  // 初始化幻灯片和分页
-  function init() {
-    initSlides();
-    createPagination();
-  }
+  // 触摸开始事件
+  document.getElementById('slideshow-container').addEventListener('touchstart', function(e) {
+    isTouching = true;
+    startY = e.touches[0].clientY;
+  });
 
-  // 调用初始化函数
-  init();
+  // 触摸移动事件
+  document.getElementById('slideshow-container').addEventListener('touchmove', function(e) {
+    if (!isTouching) return;
+    const endY = e.touches[0].clientY;
+    const diff = startY - endY; // 向上滑动为正，向下滑动为负
+    this.style.transform = `translateY(${-diff}px)`;
+    e.preventDefault(); // 阻止默认滚动行为
+  });
+
+  // 触摸结束事件
+  document.getElementById('slideshow-container').addEventListener('touchend', function() {
+    isTouching = false;
+    if (Math.abs(startY - event.changedTouches[0].clientY) > 150) { // 判断滑动距离
+      const diff = startY - event.changedTouches[0].clientY;
+      if (diff > 150) { // 向下滑动
+        const currentIndex = Math.floor(this.getBoundingClientRect().top / (window.innerHeight * 0.333)) + 1;
+        if (currentIndex < slides.length) {
+          this.style.transition = 'transform 0.5s ease-in-out';
+          this.style.transform = `translateY(-${window.innerHeight * 0.333 * currentIndex}px)`;
+        }
+      } else { // 向上滑动
+        const currentIndex = Math.ceil(this.getBoundingClientRect().top / (window.innerHeight * 0.333)) - 1;
+        if (currentIndex > 0) {
+          this.style.transition = 'transform 0.5s ease-in-out';
+          this.style.transform = `translateY(-${window.innerHeight * 0.333 * currentIndex}px)`;
+        }
+      }
+    } else {
+      this.style.transition = 'transform 0.5s ease-in-out';
+      this.style.transform = `translateY(0)`;
+    }
+  });
 </script>
 
 </body>
