@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>暖暖的衣橱</title>
+<style>
+  body { font-family: Arial, sans-serif; }
+  .content { margin: 20px; }
+  .pagination {
+    margin-top: 20px;
+    text-align: center;
+  }
+  .pagination button {
+    padding: 5px 10px;
+    margin: 0 5px;
+    cursor: pointer;
+  }
+  .item {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  .item img {
+    max-width: 100%;
+    height: auto;
+  }
+</style>
+</head>
+<body>
+
+<div class="content">
+  <!-- 内容列表 -->
+  <ul id="contentList">
+    <!-- 内容项将通过JavaScript动态添加 -->
+  </ul>
+</div>
+
+<div class="pagination">
+  <!-- 分页按钮将通过JavaScript动态添加 -->
+</div>
+
+<script>
+  // 假设我们有100个温暖的服饰项
+  const totalItems = 100;
+  const itemsPerPage = 10;
+  let currentPage = 1;
+
+  // 模拟温暖的服饰数据
+  const warmClothes = Array.from({ length: totalItems }, (_, i) => ({
+    id: i + 1,
+    name: `温暖的服饰 ${i + 1}`,
+    image: `https://via.placeholder.com/300?text=温暖的服饰${i + 1}`,
+    description: `这是温暖的服饰 ${i + 1} 的描述。`
+  }));
+
+  // 显示内容的函数
+  function displayContent(page) {
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const contentItems = warmClothes.slice(start, end);
+
+    const contentList = document.getElementById('contentList');
+    contentList.innerHTML = '';
+    contentItems.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'item';
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.name;
+      const name = document.createElement('h3');
+      name.textContent = item.name;
+      const desc = document.createElement('p');
+      desc.textContent = item.description;
+      li.appendChild(img);
+      li.appendChild(name);
+      li.appendChild(desc);
+      contentList.appendChild(li);
+    });
+  }
+
+  // 创建分页按钮的函数
+  function createPagination() {
+    const pagination = document.querySelector('.pagination');
+    pagination.innerHTML = '';
+
+    const pageCount = Math.ceil(totalItems / itemsPerPage);
+
+    for (let i = 1; i <= pageCount; i++) {
+      const button = document.createElement('button');
+      button.textContent = i;
+      button.disabled = i === currentPage;
+      button.addEventListener('click', () => {
+        currentPage = i;
+        displayContent(currentPage);
+        createPagination();
+      });
+      pagination.appendChild(button);
+    }
+  }
+
+  // 初始化内容和分页
+  function init() {
+    currentPage = 1;
+    displayContent(currentPage);
+    createPagination();
+  }
+
+  // 调用初始化函数
+  init();
+</script>
+
+</body>
+</html>
