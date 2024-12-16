@@ -6,43 +6,33 @@
 <title>暖暖的衣橱</title>
 <style>
   body, html {
-    height: 100%;
     margin: 0;
+    padding: 0;
     font-family: Arial, sans-serif;
     overflow: hidden; /* 防止内容水平滚动 */
   }
   #slideshow-container {
     position: relative;
     width: 100%;
-    height: 300%; /* 根据页数调整高度 */
-    transition: transform 0.5s ease-in-out; /* 平滑过渡效果 */
+    height: 100vh; /* 容器高度为视口高度 */
+    overflow: hidden;
   }
   .slide {
     position: absolute;
     width: 100%;
-    height: 33.33%; /* 每页占容器高度的三分之一 */
+    height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: opacity 0.5s ease-in-out;
+    opacity: 0; /* 默认不显示 */
   }
-  /* 设置每一页的背景色和图片 */
-  .slide:nth-child(1) {
-    background-color: #FFC0CB; /* 淡粉色 */
-    background-image: url('暖暖1.png'); /* 替换为你的图片URL */
-    background-size: cover;
-    background-position: center;
+  .slide img {
+    max-width: 50%; /* 图片最大宽度为容器宽度的一半 */
+    max-height: 50%; /* 图片最大高度为容器高度的一半 */
   }
-  .slide:nth-child(2) {
-    background-color: #87CEEB; /* 马卡龙蓝色 */
-    background-image: url('暖暖3.png'); /* 替换为你的图片URL */
-    background-size: cover;
-    background-position: center;
-  }
-  .slide:nth-child(3) {
-    background-color: #90EE90; /* 淡淡绿色 */
-    background-image: url('暖暖2.png'); /* 替换为你的图片URL */
-    background-size: cover;
-    background-position: center;
+  .active {
+    opacity: 1; /* 激活状态的幻灯片显示 */
   }
 </style>
 </head>
@@ -56,24 +46,29 @@
   // 定义每页的背景颜色和图片
   const slides = [
     { backgroundColor: '#FFC0CB', imageUrl: '暖暖1.png' },
-    { backgroundColor: '#87CEEB', imageUrl: '暖暖3.png' },
-    { backgroundColor: '#90EE90', imageUrl: '暖暖2.png' }
+    { backgroundColor: '#87CEEB', imageUrl: '暖暖2.png' },
+    { backgroundColor: '#90EE90', imageUrl: '暖暖3.png' }
   ];
 
   // 创建单个幻灯片的函数
-  function createSlide(slideInfo) {
+  function createSlide(slideInfo, index) {
     const slide = document.createElement('div');
     slide.className = 'slide';
     slide.style.backgroundColor = slideInfo.backgroundColor;
-    slide.style.backgroundImage = `url(${slideInfo.imageUrl})`;
+    const img = document.createElement('img');
+    img.src = slideInfo.imageUrl;
+    slide.appendChild(img);
     return slide;
   }
 
   // 初始化幻灯片
   function initSlides() {
     const container = document.getElementById('slideshow-container');
-    slides.forEach(slideInfo => {
-      const slide = createSlide(slideInfo);
+    slides.forEach((slideInfo, index) => {
+      const slide = createSlide(slideInfo, index);
+      if (index === 0) {
+        slide.classList.add('active');
+      }
       container.appendChild(slide);
     });
   }
@@ -93,34 +88,40 @@
   document.getElementById('slideshow-container').addEventListener('touchmove', function(e) {
     if (!isTouching) return;
     const endY = e.touches[0].clientY;
-    const diff = startY - endY; // 向上滑动为正，向下滑动为负
-    this.style.transform = `translateY(${-diff}px)`;
+    const diff = endY - startY; // 向下滑动为正，向上滑动为负
+    this.style.transform = `translateY(${diff}px)`;
     e.preventDefault(); // 阻止默认滚动行为
   });
 
   // 触摸结束事件
   document.getElementById('slideshow-container').addEventListener('touchend', function() {
     isTouching = false;
-    if (Math.abs(startY - event.changedTouches[0].clientY) > 150) { // 判断滑动距离
+    if (Math.abs(startY - event.changedTouches[0].clientY) > 100) { // 判断滑动距离
       const diff = startY - event.changedTouches[0].clientY;
-      if (diff > 150) { // 向下滑动
-        const currentIndex = Math.floor(this.getBoundingClientRect().top / (window.innerHeight * 0.333)) + 1;
-        if (currentIndex < slides.length) {
-          this.style.transition = 'transform 0.5s ease-in-out';
-          this.style.transform = `translateY(-${window.innerHeight * 0.333 * currentIndex}px)`;
-        }
-      } else { // 向上滑动
-        const currentIndex = Math.ceil(this.getBoundingClientRect().top / (window.innerHeight * 0.333)) - 1;
-        if (currentIndex > 0) {
-          this.style.transition = 'transform 0.5s ease-in-out';
-          this.style.transform = `translateY(-${window.innerHeight * 0.333 * currentIndex}px)`;
-        }
+      const currentActiveIndex = document.querySelector('.active').getAttribute('data-index');
+      let nextIndex = currentActiveIndex;
+      if (diff > 100) { // 向下滑动
+        nextIndex = (parseInt(currentActiveIndex) + 1) % slides.length;
+      } else if (diff < -100) { // 向上滑动
+        nextIndex = (parseInt(currentActiveIndex) - 1 + slides.length) % slides.length;
       }
+      changeSlide(nextIndex);
     } else {
       this.style.transition = 'transform 0.5s ease-in-out';
       this.style.transform = `translateY(0)`;
     }
   });
+
+  // 改变幻灯片的函数
+  function changeSlide(index) {
+    const slidesElements = document.querySelectorAll('.slide');
+    slidesElements.forEach(slide => {
+      slide.classList.remove('active');
+    });
+    const nextSlide = slidesElements[index];
+    nextSlide.classList.add('active');
+    document.getElementById('slideshow-container').style.transform = `translateY(-${index * 100vh}px)`;
+  }
 </script>
 
 </body>
